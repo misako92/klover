@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "name": "Bouteille PET 1.5L",
+    "sku": "PET-150-CL",
+    "material": "Plastique (PET)",
+    "weight": 35,
+    "status": "Classified"
+  },
+  {
+    "id": "2",
+    "name": "Carton Emballage L",
+    "sku": "BOX-L-001",
+    "material": "Carton",
+    "weight": 120,
+    "status": "Classified"
+  },
+  {
+    "id": "3",
+    "name": "Film Plastique",
+    "sku": "FLM-002",
+    "material": "Plastique (LDPE)",
+    "weight": 12,
+    "status": "ToVerify"
+  },
+  {
+    "id": "4",
+    "name": "Bouteille Verre 75cl",
+    "sku": "GLS-750-GR",
+    "material": "Verre",
+    "weight": 450,
+    "status": "Classified"
+  },
+  {
+    "id": "5",
+    "name": "Canette Alu 33cl",
+    "sku": "ALU-330-STD",
+    "material": "Aluminium",
+    "weight": 14,
+    "status": "Classified"
+  }
+]

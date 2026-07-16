@@ -1,0 +1,17 @@
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
+
+import path from "node:path";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: [],
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "server-only": path.resolve(__dirname, "./src/test-support/server-only.ts"),
+    },
+  },
+});

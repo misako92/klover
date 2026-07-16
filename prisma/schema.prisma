@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enums
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MaterialType {
+  PLASTIC
+  PLASTIC_PET
+  CARDBOARD
+  GLASS
+  ALUMINUM
+  STEEL
+  WOOD
+  TEXTILE
+  COMPOSITE
+  UNKNOWN
+}
+
+enum EcoOrganism {
+  CITEO
+  LEKO
+  ECOMAISON
+  VALDELIA
+  OTHER
+}
+
+enum PackagingType {
+  PRIMARY
+  SECONDARY
+  TERTIARY
+}
+
+enum ClassificationStatus {
+  CONFIRMED
+  NEEDS_REVIEW
+  PENDING
+  ARCHIVED
+}
+
+enum DeclarationStatus {
+  DRAFT
+  SUBMITTED
+  ARCHIVED
+}
+
+enum ImportStatus {
+  MAPPING_REQUIRED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum RuleType {
+  REGEX
+  KEYWORD
+  SKU_PREFIX
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+  UNPAID
+}
+
+// Core Models
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMember[]
+  sentInvitations OrganizationInvitation[] @relation("OrganizationInvitationInviter")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  plan      String   @default("free")
+  idu       String?  // Identifiant Unique (ex: FR123456_01ABCD)
+
+  // Stripe billing
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  subscriptionStatus   SubscriptionStatus @default(ACTIVE)
+  trialEndsAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships            OrganizationMember[]
+  invitations            OrganizationInvitation[]
+  products               Product[]
+  orders                 Order[]
+  importSessions         ImportSession[]
+  complianceDeclarations ComplianceDeclaration[]
+  classificationRules    ClassificationRule[]
+  auditLogs              AuditLog[]
+  alerts                 Alert[]
+  ecoOrganismConfigs     EcoOrganismConfig[]
+  integrations           Integration[]
+}
+
+model OrganizationMember {
+  id     String   @id @default(uuid())
+  role   UserRole @default(MEMBER)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orgId String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}
+
+model OrganizationInvitation {
+  id              String       @id @default(uuid())
+  orgId           String
+  organization    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  email           String
+  role            UserRole     @default(MEMBER)
+  token           String       @unique
+  status          String       @default("PENDING") // PENDING, ACCEPTED, REVOKED, EXPIRED
+  invitedByUserId String?
+  invitedBy       User?        @relation("OrganizationInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([orgId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+// Domain Models (Scoped to Organization)
+
+model Product {
+  id                   String               @id @default(uuid())
+  orgId                String
+  organization         Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  name                 String
+  sku                  String?
+  materialType         MaterialType?
+  ecoOrganism          EcoOrganism?
+  packagingType        PackagingType        @default(PRIMARY)
+  isReusable           Boolean              @default(false)
+  reuseCount           Int                  @default(0)
+  weightG              Int?
+  quantitySold         Int?
+  status               ClassificationStatus @default(NEEDS_REVIEW)
+  classificationSource String               @default("MANUAL") // "MANUAL", "HEURISTIC", "RULE_BASED", "AI_SUGGESTION", "SHOPIFY_IMPORT", "WOOCOMMERCE_IMPORT"
+  reviewReason         String?              @db.Text
+  confidence           Float                @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([sku])
+  @@unique([orgId, sku])
+}
+
+model ImportSession {
+  id       String       @id @default(uuid())
+  orgId    String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  fileName String
+  fileUrl  String
+  status   ImportStatus @default(MAPPING_REQUIRED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model ComplianceDeclaration {
+  id          String            @id @default(uuid())
+  orgId       String
+  organization Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  period      DateTime
+  ecoOrganism EcoOrganism
+  status      DeclarationStatus @default(DRAFT)
+  totals      Json
+  submittedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model ClassificationRule {
+  id               String        @id @default(uuid())
+  orgId            String
+  organization     Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  inputField       String
+  type             RuleType
+  pattern          String
+  outputMaterial   MaterialType?
+  outputEcoOrganism EcoOrganism?
+  outputPackaging  PackagingType?
+  confidenceBoost  Float         @default(0)
+  isActive         Boolean       @default(true)
+  priority         Int           @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model Order {
+  id           String       @id @default(uuid())
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  orderNumber  String
+  customerName String?
+  totalAmount  Float  @default(0)
+  date         DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+// Audit & Monitoring Models
+
+model AuditLog {
+  id         String       @id @default(uuid())
+  orgId      String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  userId     String?
+  action     String       // e.g. "PRODUCT_CLASSIFIED", "DECLARATION_SUBMITTED", "IMPORT_COMPLETED"
+  entityType String?      // e.g. "Product", "Declaration", "ImportSession"
+  entityId   String?
+  details    Json?        // Arbitrary context (old/new values, counts, etc.)
+
+  createdAt  DateTime     @default(now())
+
+  @@index([orgId])
+  @@index([orgId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model Alert {
+  id         String       @id @default(uuid())
+  orgId      String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  type       String       // e.g. "UNCLASSIFIED_PRODUCTS", "IMPORT_FAILED", "DECLARATION_DUE"
+  title      String
+  message    String
+  severity   String       @default("INFO") // INFO, WARNING, CRITICAL
+  isRead     Boolean      @default(false)
+  entityType String?
+  entityId   String?
+
+  createdAt  DateTime     @default(now())
+
+  @@index([orgId])
+  @@index([orgId, isRead])
+}
+
+model EcoOrganismConfig {
+  id          String       @id @default(uuid())
+  orgId       String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  organism    EcoOrganism
+  apiKey      String?      // Encrypted in production
+  apiSecret   String?
+  portalLogin String?
+  status      String       @default("DISCONNECTED") // CONNECTED, DISCONNECTED, ERROR
+  lastSyncAt  DateTime?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([orgId, organism])
+  @@index([orgId])
+}
+
+model Integration {
+  id           String       @id @default(uuid())
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  platform     String       // "shopify" | "woocommerce"
+  shopUrl      String       // e.g. "myshop.myshopify.com" or "https://mystore.com"
+  accessToken  String?      // Encrypted in production
+  apiKey       String?
+  apiSecret    String?
+  isActive     Boolean      @default(false)
+  lastSyncAt   DateTime?
+  productCount Int          @default(0)
+  orderCount   Int          @default(0)
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([orgId, platform])
+  @@index([orgId])
+}
+
+model TariffProfile {
+  id           String       @id @default(uuid())
+  ecoOrganism  EcoOrganism
+  versionLabel String
+  effectiveFrom DateTime
+  effectiveTo  DateTime?
+  isActive     Boolean      @default(true)
+  rates        Json
+  notes        String?      @db.Text
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([ecoOrganism, versionLabel])
+  @@index([ecoOrganism, isActive])
+  @@index([ecoOrganism, effectiveFrom])
+}
+
+model ContactRequest {
+  id          String   @id @default(uuid())
+  company     String
+  email       String
+  companyType String
+  productCount String
+  urgency     String?
+  message     String?
+  createdAt   DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,51 @@
+﻿<svg width="3840" height="2160" viewBox="0 0 3840 2160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="3840" y2="2160" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#CCF1E0"/>
+      <stop offset="45%" stop-color="#E5FAF1"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+
+    <radialGradient id="cloud1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(700 520) rotate(10) scale(520 220)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.28"/>
+      <stop offset="55%" stop-color="#059669" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1450 360) rotate(-8) scale(680 260)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.26"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(2500 520) rotate(12) scale(620 240)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud4" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(3200 300) rotate(-6) scale(520 220)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud5" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1000 1200) rotate(8) scale(760 300)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloud6" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(2400 1280) rotate(-5) scale(820 320)">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.20"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.11"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+
+  <!-- Cloud shapes (higher contrast) -->
+  <ellipse cx="700" cy="520" rx="680" ry="240" fill="url(#cloud1)"/>
+  <ellipse cx="1450" cy="360" rx="900" ry="280" fill="url(#cloud2)"/>
+  <ellipse cx="2500" cy="520" rx="820" ry="260" fill="url(#cloud3)"/>
+  <ellipse cx="3200" cy="300" rx="700" ry="230" fill="url(#cloud4)"/>
+
+  <ellipse cx="1000" cy="1200" rx="980" ry="320" fill="url(#cloud5)"/>
+  <ellipse cx="2400" cy="1280" rx="1100" ry="340" fill="url(#cloud6)"/>
+</svg>
